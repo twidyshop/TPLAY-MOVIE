@@ -64,6 +64,40 @@ export const scrapeMovies = async (
             payload.push(obj);
         });
 
+
+    // Fallback for LK21 markup changes: collect poster links from the listing page
+    // when the legacy archive selectors no longer match.
+    if (payload.length === 0) {
+        const excluded = new Set([
+            'latest', 'release', 'populer', 'popular', 'rating', 'series',
+            'movies', 'genre', 'country', 'year', 'page', 'search',
+        ]);
+        $('main a[href], #content a[href], a[href]').each((i, anchor) => {
+            const link = $(anchor);
+            const image = link.find('img').first();
+            const href = link.attr('href') || '';
+            const imageTitle = image.attr('alt') || image.attr('title') || '';
+            const imageSrc = image.attr('data-src') || image.attr('data-lazy-src') || image.attr('src') || '';
+            if (!href || !imageTitle.trim() || !imageSrc || imageSrc.startsWith('data:')) return;
+            let parsed: URL;
+            try { parsed = new URL(href, 'https://source.invalid'); } catch { return; }
+            const segments = parsed.pathname.split('/').filter(Boolean);
+            if (segments.length !== 1 || excluded.has(segments[0].toLowerCase())) return;
+            const id = segments[0];
+            if (payload.some((item) => item._id === id)) return;
+            const item = {} as IMovies;
+            item['_id'] = id;
+            item['title'] = imageTitle.trim();
+            item['type'] = 'movie';
+            item['posterImg'] = imageSrc.startsWith('//') ? 'https:' + imageSrc : imageSrc;
+            item['rating'] = link.closest('article, .item, .movie, .poster, li, div').find('.rating').first().text().trim();
+            item['url'] = `${protocol}://${host}/movies/${id}`;
+            item['genres'] = [];
+            item['qualityResolution'] = '';
+            payload.push(item);
+        });
+    }
+
     return payload;
 };
 
