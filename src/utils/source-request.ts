@@ -79,7 +79,7 @@ export async function getSourcePage(url: string): Promise<AxiosResponse> {
     // paths with `/`, so collapse duplicate path slashes before requesting.
     // Keep the protocol separator and query string intact.
     const parsedUrl = new URL(url);
-    parsedUrl.pathname = parsedUrl.pathname.replace(/\\/{2,}/g, '/');
+    parsedUrl.pathname = parsedUrl.pathname.replace(/\/{2,}/g, '/');
     const sourceUrl = parsedUrl.toString();
     let lastError: unknown;
 
