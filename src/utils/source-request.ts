@@ -48,7 +48,8 @@ async function fetchWithScrapingBee(url: string): Promise<AxiosResponse> {
     if (response.status < 200 || response.status >= 300) {
         const error = new Error(
             `ScrapingBee mengembalikan HTTP ${response.status}`
-        ) as Error & { response?: { status: number; data: unknown } };
+        ) as Error & { response?: { status: number; data: unknown }; requestUrl?: string };
+        error.requestUrl = url;
         error.response = {
             status: response.status,
             data: typeof response.data === 'string'
@@ -136,6 +137,7 @@ export async function getSourcePage(url: string): Promise<AxiosResponse> {
             return await fetchWithScrapingBee(sourceUrl);
         } catch (proxyError) {
             console.error('[source-request] external fetch failed', {
+                requestUrl: (proxyError as any)?.requestUrl ?? sourceUrl,
                 message: proxyError instanceof Error
                     ? proxyError.message
                     : String(proxyError),
@@ -168,6 +170,7 @@ export function respondSourceError(
             : undefined;
 
     console.error('[source-request]', {
+        requestUrl: (error as any)?.requestUrl ?? null,
         source,
         status: status ?? null,
         code: axios.isAxiosError(error) ? axiosError.code : null,
