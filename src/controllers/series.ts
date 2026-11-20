@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { getSourcePage, respondSourceError } from '../utils/source-request';
 import { NextFunction as Next, Request, Response } from 'express';
 import { scrapeSeries, scrapeSeriesDetails } from '../scrapers/series';
 
@@ -14,7 +14,7 @@ export const latestSeries: TController = async (req, res) => {
     try {
         const { page = 0 } = req.query;
 
-        const axiosRequest = await axios.get(
+        const axiosRequest = await getSourcePage(
             `${process.env.ND_URL}/latest-series${
                 Number(page) > 1 ? `/page/${page}` : ''
             }`
@@ -24,9 +24,7 @@ export const latestSeries: TController = async (req, res) => {
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'NontonDrama');
     }
 };
 
@@ -40,7 +38,7 @@ export const popularSeries: TController = async (req, res) => {
     try {
         const { page = 0 } = req.query;
 
-        const axiosRequest = await axios.get(
+        const axiosRequest = await getSourcePage(
             `${process.env.ND_URL}/populer${
                 Number(page) > 1 ? `/page/${page}` : ''
             }`
@@ -50,9 +48,7 @@ export const popularSeries: TController = async (req, res) => {
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'NontonDrama');
     }
 };
 
@@ -66,7 +62,7 @@ export const recentReleaseSeries: TController = async (req, res) => {
     try {
         const { page = 0 } = req.query;
 
-        const axiosRequest = await axios.get(
+        const axiosRequest = await getSourcePage(
             `${process.env.ND_URL}/release${
                 Number(page) > 1 ? `/page/${page}` : ''
             }`
@@ -76,9 +72,7 @@ export const recentReleaseSeries: TController = async (req, res) => {
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'NontonDrama');
     }
 };
 
@@ -92,7 +86,7 @@ export const topRatedSeries: TController = async (req, res) => {
     try {
         const { page = 0 } = req.query;
 
-        const axiosRequest = await axios.get(
+        const axiosRequest = await getSourcePage(
             `${process.env.ND_URL}/rating${
                 Number(page) > 1 ? `/page/${page}` : ''
             }`
@@ -102,9 +96,7 @@ export const topRatedSeries: TController = async (req, res) => {
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'NontonDrama');
     }
 };
 
@@ -118,14 +110,12 @@ export const seriesDetails: TController = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const axiosRequest = await axios.get(`${process.env.ND_URL}/${id}`);
+        const axiosRequest = await getSourcePage(`${process.env.ND_URL}/${id}`);
 
         const payload = await scrapeSeriesDetails(req, axiosRequest);
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'NontonDrama');
     }
 };
