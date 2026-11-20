@@ -6,9 +6,17 @@ import express, { Application, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import path from 'path';
+import axios from 'axios';
 import routes from './routes';
 
 const app: Application = express();
+
+// Use browser-like headers when fetching the configured source pages.
+axios.defaults.timeout = 20000;
+axios.defaults.headers.common['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+axios.defaults.headers.common['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8';
+axios.defaults.headers.common['Accept-Language'] = 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7';
+axios.defaults.headers.common['Cache-Control'] = 'no-cache';
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
