@@ -1,7 +1,7 @@
 import cheerio from 'cheerio';
 import { AxiosResponse } from 'axios';
 import { Request } from 'express';
-import { ISearchedMoviesOrSeries } from '../types.ts';
+import { ISearchedMoviesOrSeries } from '../types';
 
 /**
  * Scrape searched movies or series
