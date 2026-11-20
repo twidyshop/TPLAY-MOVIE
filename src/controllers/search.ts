@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { getSourcePage, respondSourceError } from '../utils/source-request';
 import { NextFunction as Next, Request, Response } from 'express';
 import { scrapeSearchedMoviesOrSeries } from '../scrapers/search';
 
@@ -14,16 +14,14 @@ export const searchedMoviesOrSeries: TController = async (req, res) => {
     try {
         const { title = '' } = req.params;
 
-        const axiosRequest = await axios.get(
-            `${process.env.LK21_URL}/?s=${title}`
+        const axiosRequest = await getSourcePage(
+            `${process.env.LK21_URL}/?s=${encodeURIComponent(title)}`
         );
 
         const payload = await scrapeSearchedMoviesOrSeries(req, axiosRequest);
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'LK21');
     }
 };
