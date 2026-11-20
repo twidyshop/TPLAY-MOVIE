@@ -1,7 +1,7 @@
 import cheerio from 'cheerio';
 import { AxiosResponse } from 'axios';
 import { Request } from 'express';
-import { ISetOfYears } from '../types.ts';
+import { ISetOfYears } from '../types';
 
 /**
  * Scrape a set of release years asynchronously
