@@ -5,7 +5,7 @@ const USER_AGENT =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 const SCRAPINGBEE_ENDPOINT = 'https://app.scrapingbee.com/api/v1';
-const DIRECT_TIMEOUT = 18000;
+const DIRECT_TIMEOUT = 9000;
 const PROXY_TIMEOUT = 25000;
 
 function isCloudflareChallenge(data: unknown): boolean {
@@ -83,7 +83,7 @@ export async function getSourcePage(url: string): Promise<AxiosResponse> {
     const sourceUrl = parsedUrl.toString();
     let lastError: unknown;
 
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
         try {
             const origin = new URL(sourceUrl).origin;
             const response = await axios.get<string>(sourceUrl, {
@@ -108,10 +108,19 @@ export async function getSourcePage(url: string): Promise<AxiosResponse> {
             const status = axios.isAxiosError(error)
                 ? error.response?.status
                 : (error as any)?.response?.status;
-            const retryable =
-                !status || status === 408 || status === 429 || status >= 500;
-            if (status === 403) break;
-            if (!retryable || attempt === 3) break;
+            const code = axios.isAxiosError(error) ? error.code : (error as any)?.code;
+            const tlsFailure = [
+                'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+                'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+                'CERT_HAS_EXPIRED',
+                'DEPTH_ZERO_SELF_SIGNED_CERT',
+                'SELF_SIGNED_CERT_IN_CHAIN',
+            ].includes(String(code));
+            const retryable = !status || status === 408 || status === 429 || status >= 500;
+            // TLS errors and blocks are deterministic: go straight to proxy instead of
+            // wasting multiple direct-connection attempts.
+            if (status === 403 || tlsFailure) break;
+            if (!retryable || attempt === 2) break;
             await new Promise((resolve) => setTimeout(resolve, attempt * 700));
         }
     }
