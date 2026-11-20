@@ -120,7 +120,12 @@ export async function getSourcePage(url: string): Promise<AxiosResponse> {
         (lastError instanceof Error &&
             /cloudflare|challenge/i.test(lastError.message));
 
-    if (challenge && process.env.SCRAPINGBEE_API_KEY) {
+    if (challenge) {
+        if (!process.env.SCRAPINGBEE_API_KEY) {
+            throw new Error(
+                'Sumber masih memblokir koneksi langsung. Tambahkan SCRAPINGBEE_API_KEY di Vercel agar fallback proxy aktif.'
+            );
+        }
         try {
             return await fetchWithScrapingBee(url);
         } catch (proxyError) {
