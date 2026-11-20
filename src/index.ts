@@ -1,5 +1,5 @@
 import 'module-alias/register';
-import server from '@/server';
+import server from 'server.ts';
 
 const port: number = Number(process.env.PORT) || 8080;
 
