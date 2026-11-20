@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { getSourcePage, respondSourceError } from '../utils/source-request';
 import { NextFunction as Next, Request, Response } from 'express';
 import { scrapeStreamSources } from '../scrapers/stream';
 
@@ -16,7 +16,7 @@ export const streamMovie: TController = async (req, res) => {
 
         const movieId = originalUrl.split('/').reverse()[1];
 
-        const axiosRequest = await axios.get(
+        const axiosRequest = await getSourcePage(
             `${process.env.LK21_URL}/${movieId}`
         );
 
@@ -24,9 +24,7 @@ export const streamMovie: TController = async (req, res) => {
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'LK21 / NontonDrama');
     }
 };
 
@@ -46,7 +44,7 @@ export const streamSeries: TController = async (req, res) => {
 
         const seriesId = _ids.join('-');
 
-        const axiosRequest = await axios.get(
+        const axiosRequest = await getSourcePage(
             `${process.env.ND_URL}/${seriesId}-season-${season}-episode-${episode}-${year}`
         );
 
@@ -54,8 +52,6 @@ export const streamSeries: TController = async (req, res) => {
 
         res.status(200).json(payload);
     } catch (err) {
-        console.error(err);
-
-        res.status(400).json(null);
+        respondSourceError(res, err, 'LK21 / NontonDrama');
     }
 };
