@@ -23,14 +23,13 @@ async function fetchWithScrapingBee(url: string): Promise<AxiosResponse> {
         );
     }
 
-    // Auto mode selects the cheapest successful browser/proxy combination.
-    // max_cost=25 prevents unexpectedly expensive stealth-proxy requests.
+    // Auto mode escalates through stealth proxy when required (75 credits on success).
+    // The caller explicitly approved this maximum to prioritize successful fetching.
     const response = await axios.get<string>(SCRAPINGBEE_ENDPOINT, {
         params: {
             url,
             mode: 'auto',
-            max_cost: 25,
-            timeout: PROXY_TIMEOUT - 2000,
+            max_cost: 75,
             block_resources: true,
             wait_browser: 'domcontentloaded',
         },
@@ -120,17 +119,26 @@ export async function getSourcePage(url: string): Promise<AxiosResponse> {
     const status = axios.isAxiosError(lastError)
         ? lastError.response?.status
         : (lastError as any)?.response?.status;
-    const challenge =
+    const errorCode = axios.isAxiosError(lastError) ? lastError.code : (lastError as any)?.code;
+    const tlsCertificateError = [
+        'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+        'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+        'CERT_HAS_EXPIRED',
+        'DEPTH_ZERO_SELF_SIGNED_CERT',
+        'SELF_SIGNED_CERT_IN_CHAIN',
+    ].includes(String(errorCode));
+    const needsProxy =
         status === 403 ||
+        tlsCertificateError ||
         (axios.isAxiosError(lastError) &&
             isCloudflareChallenge(lastError.response?.data)) ||
         (lastError instanceof Error &&
             /cloudflare|challenge/i.test(lastError.message));
 
-    if (challenge) {
+    if (needsProxy) {
         if (!process.env.SCRAPINGBEE_API_KEY) {
             throw new Error(
-                'Sumber masih memblokir koneksi langsung. Tambahkan SCRAPINGBEE_API_KEY di Vercel agar fallback proxy aktif.'
+                'Koneksi langsung ke sumber gagal atau diblokir. Tambahkan SCRAPINGBEE_API_KEY di Vercel agar fallback proxy aktif.'
             );
         }
         try {
