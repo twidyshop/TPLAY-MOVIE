@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import cheerio from 'cheerio';
 import { AxiosResponse } from 'axios';
-import { IStreamSources } from '@/types';
+import { IStreamSources } from '../types.ts';
 
 /**
  * Scrape stream sources asynchronously
