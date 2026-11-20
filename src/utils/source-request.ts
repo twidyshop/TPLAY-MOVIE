@@ -75,12 +75,18 @@ async function fetchWithScrapingBee(url: string): Promise<AxiosResponse> {
  * The original LK21_URL / ND_URL are never rewritten.
  */
 export async function getSourcePage(url: string): Promise<AxiosResponse> {
+    // LK21_URL in Vercel may include a trailing slash. Controllers append
+    // paths with `/`, so collapse duplicate path slashes before requesting.
+    // Keep the protocol separator and query string intact.
+    const parsedUrl = new URL(url);
+    parsedUrl.pathname = parsedUrl.pathname.replace(/\\/{2,}/g, '/');
+    const sourceUrl = parsedUrl.toString();
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= 3; attempt += 1) {
         try {
-            const origin = new URL(url).origin;
-            const response = await axios.get<string>(url, {
+            const origin = new URL(sourceUrl).origin;
+            const response = await axios.get<string>(sourceUrl, {
                 timeout: DIRECT_TIMEOUT,
                 maxRedirects: 5,
                 headers: {
@@ -127,7 +133,7 @@ export async function getSourcePage(url: string): Promise<AxiosResponse> {
             );
         }
         try {
-            return await fetchWithScrapingBee(url);
+            return await fetchWithScrapingBee(sourceUrl);
         } catch (proxyError) {
             console.error('[source-request] external fetch failed', {
                 message: proxyError instanceof Error
